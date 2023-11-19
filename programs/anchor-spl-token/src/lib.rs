@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{token::{Token, TokenAccount, Mint}, associated_token::AssociatedToken, token_interface::Token2022};
-use mpl_token_metadata::state::{DataV2, Creator, Collection, Uses};
+use anchor_spl::{token::{Token, TokenAccount, Mint}, associated_token::AssociatedToken};
+use mpl_token_metadata::state::DataV2;
 
-declare_id!("GsjjVYzUrAJGTf7MTjc6KWgdtCrezYy7P7HcPLYCX2rt");
+declare_id!("GA9pS4npTndsaY3BdarznBLGJPrLZGHLJqLzdTZJgn3b");
 
 #[program]
 pub mod anchor_spl_token {
     use anchor_lang::system_program;
-    use anchor_spl::{token::{initialize_mint, InitializeMint, mint_to, MintTo, transfer, Transfer, initialize_account, InitializeAccount, burn, Burn, freeze_account, FreezeAccount, close_account, CloseAccount, thaw_account, ThawAccount, set_authority, SetAuthority}, associated_token, metadata::{create_metadata_accounts_v3, create_master_edition_v3}, token_2022};
+    use anchor_spl::{token::{initialize_mint, InitializeMint, mint_to, MintTo, transfer, Transfer, burn, Burn, freeze_account, FreezeAccount, close_account, CloseAccount, thaw_account, ThawAccount, set_authority, SetAuthority, spl_token::instruction::AuthorityType}, associated_token, metadata::{create_metadata_accounts_v3, create_master_edition_v3}};
     // use mpl_token_metadata::instruction::CreateMasterEdition;
     
 
@@ -76,16 +76,36 @@ pub mod anchor_spl_token {
         Ok(())
     }
 
-    pub fn set_authority_token(ctx: Context<SetAuthorityToken>)->Result<()>{
+    pub fn set_authority_token(ctx: Context<SetAuthorityToken>,authority_value:u8)->Result<()>{
+        let account_or_mint;
+        let authority_type;
+        match authority_value {
+            0=> {
+                authority_type = anchor_spl::token::spl_token::instruction::AuthorityType::MintTokens;
+                account_or_mint=ctx.accounts.mint_token.to_account_info();
+            },
+            1=> {
+                authority_type = anchor_spl::token::spl_token::instruction::AuthorityType::FreezeAccount;
+                account_or_mint=ctx.accounts.mint_token.to_account_info();
+            },
+            2 => {
+                authority_type = anchor_spl::token::spl_token::instruction::AuthorityType::AccountOwner;
+                account_or_mint = ctx.accounts.token_account.to_account_info();
+            },
+            _ => {
+                authority_type = anchor_spl::token::spl_token::instruction::AuthorityType::CloseAccount;
+                account_or_mint = ctx.accounts.token_account.to_account_info();
+            }
+        }
         set_authority(
             CpiContext::new(
                 ctx.accounts.token_program.to_account_info(), 
                 SetAuthority{
-                    account_or_mint:ctx.accounts.mint_token.to_account_info(),
+                    account_or_mint:account_or_mint,
                     current_authority:ctx.accounts.signer.to_account_info()
                 }
             ), 
-            anchor_spl::token::spl_token::instruction::AuthorityType::MintTokens, 
+            authority_type.clone(), 
             Some(ctx.accounts.new_signer.key())
         )?;
 

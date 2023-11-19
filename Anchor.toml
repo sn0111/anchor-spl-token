@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-anchor_spl_token = "GsjjVYzUrAJGTf7MTjc6KWgdtCrezYy7P7HcPLYCX2rt"
+anchor_spl_token = "GA9pS4npTndsaY3BdarznBLGJPrLZGHLJqLzdTZJgn3b"
 
 [registry]
 url = "https://api.apr.dev"
